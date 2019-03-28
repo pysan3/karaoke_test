@@ -1,0 +1,8 @@
+/static
+/test
+apps/database.sqlite3
+audio/unet.model
+.vscode
+__pycache__
+*.wav
+*.png
