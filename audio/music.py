@@ -8,9 +8,9 @@ import sox
 
 from audio import analyze
 
-def load_music(song_id):
-    if song_id in [s[12:-4] for s in glob('./audio/wav/*.wav')]:
-        with open('./audio/wav/{0}.wav'.format(song_id), 'rb') as f:
+def load_music(song_id, audio_type):
+    if song_id in [s[9 + len(audio_type):-4] for s in glob('./audio/{0}/*.wav'.format(audio_type))]:
+        with open('./audio/{0}/{1}.wav'.format(audio_type, song_id), 'rb') as f:
             return f.read()
     else:
         return False

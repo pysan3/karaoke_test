@@ -126,7 +126,7 @@ async def load_music(req, resp, *, req_id):
     f_index = functions.index(sys._getframe().f_code.co_name)
     user_id = req_id.split('_')[0]
     song_id = req_id.split('_')[1]
-    result = backmusic.load_music(song_id)
+    result = backmusic.load_music(song_id, 'inst')
     # {'song_id':song.id, 'name':song.song_title, 'singer':song.singer}
     if result == False:
         resp.status_code = 500
