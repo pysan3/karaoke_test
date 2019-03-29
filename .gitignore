@@ -1,5 +1,6 @@
 /static
 /test
+lag.txt
 apps/database.sqlite3
 audio/unet.model
 .vscode
