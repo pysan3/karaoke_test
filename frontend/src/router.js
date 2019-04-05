@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import axios from 'axios'
 
 const routerOptions = [
   { path: '/', component: 'Home' },
@@ -23,7 +22,6 @@ const routes = routerOptions.map(route => {
 })
 
 Vue.use(Router)
-Vue.use(axios)
 
 export default new Router({
   mode: 'history',

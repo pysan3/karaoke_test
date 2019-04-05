@@ -42,8 +42,7 @@ def signup(data):
     return {'user_id': user_id, 'msg': msg}
 
 def logged_in(user_id):
-    # TODO: write here for auto login
-    if user_id == -1:
+    if user_id < 2:
         return 0
     session = Session()
     result = session.query(Eventlogs).filter_by(user_id=user_id).all()
@@ -110,9 +109,11 @@ def create_logger(filename):
     fmt = '%(name)s %(levelno)s %(funcName)s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=fmt)
     logger.setLevel(logging.DEBUG)
+    # -> /co
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
     logger.addHandler(stream_handler)
+    # till here
     sqlite_handler = SQLiteHandler()
     sqlite_handler.setLevel(logging.DEBUG)
     logger.addHandler(sqlite_handler)

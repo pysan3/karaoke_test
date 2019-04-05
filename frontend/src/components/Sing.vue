@@ -34,8 +34,7 @@ export default {
               context = new AudioContext()
               const p = context.decodeAudioData(responseData)
               connection = new WebSocket('ws://localhost:5042/ws/sing')
-              connection.onopen = event => {
-                console.log(event)
+              connection.onopen = event => { // eslint-disable-line no-unused-vars
                 connection.send(JSON.stringify({
                   user_id: vm.user_id,
                   song_id: vm.song_id,

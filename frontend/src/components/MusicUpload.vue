@@ -6,11 +6,13 @@
     <div id="byte_content"></div>
     <h2>data of music</h2>
     <h3>music name</h3>
-    <button @click="getRandom">New random number</button>
-    <br>
     <input type="text" placeholder="music name" v-model="song_title">
+    <h4>{{ song_title.length }}</h4>
+    <br>
+    <button @click="getRandom">New random number</button>
     <h3>singer name</h3>
     <input type="text" placeholder="name of singer" v-model="singer">
+    <h4>{{ singer.length }}</h4>
     <h3>upload data type</h3>
     <input type="text" placeholder="file type" v-model="file_type">
     <button id="btn" @click="upload">upload music</button>
@@ -50,7 +52,7 @@ export default {
     },
     upload () {
       const vm = this
-      if (this.song_title.length && this.singer.length) {
+      if (this.song_title.length * this.singer.length === 0) {
         alert('name should be longer than one letter')
         return
       }
