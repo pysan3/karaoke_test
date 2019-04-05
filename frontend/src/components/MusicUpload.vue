@@ -25,8 +25,8 @@ import { mapState } from 'vuex'
 export default {
   data () {
     return {
-      song_title: 'hoge',
-      singer: 'fhana',
+      song_title: '',
+      singer: 'default',
       file_type: '',
       uploadFile: null,
       uploading: 0
@@ -43,10 +43,8 @@ export default {
       player.src = URL.createObjectURL(file)
       let fname = file.name.split('.')
       if (fname.length !== 0) {
-        let ftype = fname[fname.length - 1]
-        fname = fname.slice(0, -1 - ftype.length)
-        this.song_title = fname
-        this.file_type = ftype
+        this.song_title = fname.slice(0, -1).join('.')
+        this.file_type = fname[fname.length - 1]
       }
       this.uploadFile = file
     },
