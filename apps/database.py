@@ -94,8 +94,8 @@ class SQLiteHandler(logging.Handler):
             record.result = ''
         else:
             recs = record.msg[1:].split(' ')
-            record.user_id = int(recs[0])
-            record.event_id = int(recs[1])
+            record.event_id = int(recs[0])
+            record.user_id = int(recs[1])
             record.push = recs[2]
             record.result = recs[3]
         record.msg = message

@@ -28,7 +28,8 @@ export default {
             const jsonData = {
               'song_id': list[i][0],
               'name': list[i][1],
-              'singer': list[i][2]
+              'singer': list[i][2],
+              'count': list[i][3]
             }
             this.mList.push(jsonData)
           }

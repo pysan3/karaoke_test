@@ -2,6 +2,7 @@ import numpy as np
 import logging
 import hashlib
 import os
+import collections
 from datetime import datetime
 
 from apps.database import Session, Eventlogs, Eventnames, Users, Musics, Hsh, SQLiteHandler
@@ -46,9 +47,9 @@ def logged_in(user_id):
         return 0
     session = Session()
     result = session.query(Eventlogs).filter_by(user_id=user_id).all()
-    event_name_logout = session.query(Eventnames).filter_by(event_name='logout').one().id
+    event_id_logout = session.query(Eventnames).filter_by(event_name='logout').one().id - 1
     session.close()
-    if len(result) == 0 or result[-1].event_id == event_name_logout:
+    if len(result) == 0 or result[-1].event_id == event_id_logout:
         return 0
     else:
         return 1
@@ -56,17 +57,23 @@ def logged_in(user_id):
 def music_list():
     session = Session()
     songs = session.query(Musics).all()
+    event_id_ws_sing = session.query(Eventnames).filter_by(event_name='ws_sing').one().id - 1
+    count = session.query(Eventlogs).filter_by(event_id=event_id_ws_sing).all()
     session.close()
-    result = []
-    for song in songs:
-        result.append([song.id, song.song_title, song.singer])
+    song_dict = collections.defaultdict(int)
+    for i in range(len(count)):
+        song_dict[int(count[i].push)] += 1
+    result = sorted([[song.id, song.song_title, song.singer, song_dict[int(song.id)]] for song in songs], key=lambda x:x[3], reverse=True)
     return result
 
 def isExist(name, singer):
     session = Session()
     song = session.query(Musics).filter_by(song_title=name, singer=singer).all()
     session.close()
-    return len(song) != 0
+    if len(song):
+        return song[0].id
+    else:
+        return 0
 
 def add_music(name, singer):
     session = Session()
@@ -109,7 +116,7 @@ def create_logger(filename):
     fmt = '%(name)s %(levelno)s %(funcName)s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=fmt)
     logger.setLevel(logging.DEBUG)
-    # -> /co
+    # -> /co logger
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
     logger.addHandler(stream_handler)

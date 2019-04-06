@@ -17,7 +17,17 @@
     <input type="text" placeholder="file type" v-model="file_type">
     <button id="btn" @click="upload">upload music</button>
     <br>
-    <h1 v-if="uploading === 1">uploading ...</h1>
+    <h2>result</h2>
+    <br>
+    <div v-if="uploading === 1">
+      <h3>uploading ...</h3>
+    </div>
+    <div v-else-if="uploading === 2">
+      <button @click="sing">already exists</button>
+    </div>
+    <div v-else-if="uploading === 3">
+      <button @click="sing">finished upload</button>
+    </div>
   </div>
 </template>
 
@@ -31,7 +41,8 @@ export default {
       singer: 'default',
       file_type: '',
       uploadFile: null,
-      uploading: 0
+      songID: 0,
+      uploading: 0 // 0:none, 1:uploading, 2:samename, 3:finished
     }
   },
   computed: mapState([
@@ -51,45 +62,66 @@ export default {
       this.uploadFile = file
     },
     upload () {
-      const vm = this
       if (this.song_title.length * this.singer.length === 0) {
         alert('name should be longer than one letter')
         return
       }
-      this.uploading = 1
-      const formData = new FormData()
-      formData.append('user_id', this.user_id)
-      formData.append('song_title', this.song_title)
-      formData.append('singer', this.singer)
-      formData.append('file_type', this.file_type)
-      formData.append('music', this.uploadFile)
-      const config = {
-        headers: {
-          'context-type': 'multipart/form-data'
-        }
+      // functions
+      const vm = this
+      const checkExistence = async () => {
+        await axios
+          .post('http://localhost:5042/api/alreadyExists', {
+            song_title: vm.song_title,
+            singer: vm.singer
+          })
+          .then(response => {
+            vm.songID = response.data.song_id - 0
+          })
       }
-      axios.post('http://localhost:5042/api/upload', formData, config)
-        .then(response => {
-          const songID = response.data.song_id
-          const checkUpload = songID => {
-            axios.get('http://localhost:5042/api/isUploaded/' + songID)
-              .then(response => {
-                if (response.data.isUploaded === 1) {
-                  clearInterval(interval)
-                  vm.$router.push('/sing/' + songID)
-                }
-              })
-              .catch(error => {
-                console.log(error)
-              })
+      const uploadMusicData = () => {
+        const formData = new FormData()
+        formData.append('user_id', vm.user_id)
+        formData.append('song_title', vm.song_title)
+        formData.append('singer', vm.singer)
+        formData.append('file_type', vm.file_type)
+        formData.append('music', vm.uploadFile)
+        const config = {
+          headers: {
+            'context-type': 'multipart/form-data'
           }
-          const interval = setInterval(function () {
-            checkUpload(songID)
+        }
+        axios
+          .post('http://localhost:5042/api/upload', formData, config)
+          .then(response => {
+            vm.songID = response.data.song_id
+          })
+      }
+      const checkUpload = songID => {
+        axios
+          .get('http://localhost:5042/api/isUploaded/' + songID)
+          .then(response => {
+            if (response.data.isUploaded === 1) {
+              clearInterval(interval)
+              vm.uploading = 3
+            }
+          })
+      }
+      // program here
+      let interval
+      checkExistence().then(() => {
+        if (this.songID) {
+          this.uploading = 2
+        } else {
+          this.uploading = 1
+          uploadMusicData()
+          interval = setInterval(function () {
+            checkUpload(vm.songID)
           }, 1000)
-        })
-        .catch(error => {
-          console.log(error)
-        })
+        }
+      })
+    },
+    sing () {
+      this.$router.push('/sing/' + this.songID)
     },
     getRandom () {
       const path = 'http://localhost:5042/api/random'

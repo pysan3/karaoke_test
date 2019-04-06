@@ -84,11 +84,10 @@ async def signup(req, resp):
 async def musiclist(req, resp):
     f_index = functions.index(sys._getframe().f_code.co_name)
     result = backapp.music_list()
-    # {id : {'name':'song_title', 'singer':'singer_name'}}
+    # {['id':num, name':'song_title', 'singer':'singer_name', 'count':num], ...}
     logger.info('{0}@_@{1} {2} {3} {4}'.format(
         'success', f_index, 0, '', 'list of musics'
     ))
-    print(json.dumps(result))
     resp.media = json.dumps(result)
 
 @api.route('/api/upload')
@@ -115,6 +114,12 @@ async def upload(req, resp):
             'music upload', f_index, data[0].value, song_id, 1
         ))
         music_upload(song_id, data[4].value, data[3].value)
+    resp.media = {'song_id':song_id}
+
+@api.route('/api/alreadyExists')
+async def alreadyExists(req, resp):
+    data = await req.media()
+    song_id = backapp.isExist(data['song_title'], data['singer'])
     resp.media = {'song_id':song_id}
 
 @api.route('/api/isUploaded/{song_id}')
@@ -155,7 +160,7 @@ async def ws_sing(ws):
             ws_handler.close(data)
             break
     logger.info('{0}@_@{1} {2} {3} {4}'.format(
-        'ws connection completed', f_index, data['user_id'], ws_handler.return_counter(), 1
+        'ws connection completed', f_index, data['user_id'], data['song_id'], ws_handler.return_counter()
     ))
 
 @api.route('/api/random')
