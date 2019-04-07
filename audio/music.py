@@ -66,7 +66,7 @@ class WebSocketApp:
         self.data.extend(np.frombuffer(stream, dtype='float32'))
         self.counter[0] += 1
 
-    def lag_estimate(self):
+    def lag_estimate(self, median):
         hsh, ptime = tuple(list(map(int, l.split())) for l in create_hash(np.array(self.data[:1024*250])))
         lag_dict = {0:0}
         for i in range(len(hsh)):
@@ -76,7 +76,7 @@ class WebSocketApp:
                     lag_dict[lag] += 1
                 else:
                     lag_dict[lag] = 1
-        self.lag = True
+        self.lag = median
         if len(lag_dict) >= 3:
             poss_lag = sorted(lag_dict.values(), reverse=True)[:3]
             for i in range(2, 1, -1):
@@ -117,6 +117,9 @@ class WebSocketApp:
 
     def return_counter(self):
         return abs(self.counter[0])
+
+    def return_lag(self):
+        return self.lag
 
     def close(self, info):
         if self.lag > 0:

@@ -146,8 +146,8 @@ async def ws_sing(ws):
     f_index = functions.index(sys._getframe().f_code.co_name)
     @api.background.task
     def lag_estimate(handler):
-        handler.lag_estimate()
-        handler.noise_reduction()
+        handler.lag_estimate(backapp.ws_lag())
+        # handler.noise_reduction()
     await ws.accept()
     data = await ws.receive_json()
     ws_handler = backmusic.WebSocketApp(backapp.hashtable(data['song_id']))
@@ -160,7 +160,7 @@ async def ws_sing(ws):
             ws_handler.close(data)
             break
     logger.info('{0}@_@{1} {2} {3} {4}'.format(
-        'ws connection completed', f_index, data['user_id'], data['song_id'], ws_handler.return_counter()
+        str(ws_handler.return_lag()), f_index, data['user_id'], data['song_id'], ws_handler.return_counter()
     ))
 
 @api.route('/api/random')

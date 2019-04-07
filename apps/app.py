@@ -3,6 +3,7 @@ import logging
 import hashlib
 import os
 import collections
+import statistics
 from datetime import datetime
 
 from apps.database import Session, Eventlogs, Eventnames, Users, Musics, Hsh, SQLiteHandler
@@ -99,6 +100,14 @@ def upload_hash(song_id, h, t, n):
     session.commit()
     session.close()
 
+def ws_lag():
+    session = Session()
+    event_id_ws_sing = session.query(Eventnames).filter_by(event_name='ws_sing').one().id - 1
+    lag_list = session.query(Eventlogs).filter_by(event_id=event_id_ws_sing).all()
+    session.close()
+    lag = statistics.median([int(l.log_message) for l in lag_list])
+    return lag
+
 def hashtable(song_id):
     session = Session()
     hsh = session.query(Hsh).filter_by(song_id=song_id).one()
@@ -126,21 +135,6 @@ def create_logger(filename):
     logger.addHandler(sqlite_handler)
     logger.propagate = False
     return logger
-
-def init_db():
-    session = Session()
-    session.add(Users(
-        user_name='master',
-        user_password='password',
-        created_at=datetime.now().isoformat(' ', 'seconds'),
-    ))
-    session.add(Musics(
-        song_title='wonder stella',
-        singer='fhana',
-        created_at=datetime.now().isoformat(' ', 'seconds'),
-    ))
-    session.commit()
-    session.close()
 
 def set_templates():
     import shutil

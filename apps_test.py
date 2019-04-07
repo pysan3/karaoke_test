@@ -1,6 +1,7 @@
 import os
 from glob import glob
+import statistics
 
 import apps.app as backapp
 
-print(backapp.music_list())
+print(statistics.median([0]))
