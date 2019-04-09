@@ -131,7 +131,7 @@ async def load_music(req, resp, *, req_id):
     f_index = functions.index(sys._getframe().f_code.co_name)
     user_id = req_id.split('_')[0]
     song_id = req_id.split('_')[1]
-    result = backmusic.load_music(song_id, 'inst')
+    result = backmusic.load_music(song_id, 'wav')
     # {'song_id':song.id, 'name':song.song_title, 'singer':song.singer}
     if result == False:
         resp.status_code = 500
@@ -147,6 +147,9 @@ async def ws_sing(ws):
     @api.background.task
     def lag_estimate(handler):
         handler.lag_estimate(backapp.ws_lag())
+        logger.info('{0}@_@{1} {2} {3} {4}'.format(
+            'lag estimation', f_index, 0, 0, 0
+        ))
         # handler.noise_reduction()
     await ws.accept()
     data = await ws.receive_json()

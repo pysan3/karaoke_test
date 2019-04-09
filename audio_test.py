@@ -74,12 +74,20 @@ def backmusic_upload():
         data = f.read()
     backmusic.upload(song_id, data, ftype)
 
-def noise_reduction():
-    pass
+def lag_estimation():
+    with open('hoge.wav', 'rb') as f:
+        data = np.frombuffer(f.read()[44:], dtype='int16').astype(np.float32) / 32676
+    hsh, ptime = tuple(list(map(int, l.split())) for l in backmusic.create_hash(np.array(data[:1024*250])))
+    with open('audio/wav/2.wav', 'rb') as f:
+        data = np.frombuffer(f.read()[44:], dtype='int16').astype(np.float32) / 32676
+    hsh_data, ptime_data = tuple(list(map(int, l.split())) for l in backmusic.create_hash(np.array(data[:1024*250])))
+    print('here')
+    print(analyze.lag_guess(hsh, ptime, hsh_data, ptime_data))
 
 # separate_whole_audio_data()
 # backmusic_upload()
-noise_reduction()
+# noise_reduction()
+lag_estimation()
 
 # main()
 # pr = cProfile.Profile()

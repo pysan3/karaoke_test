@@ -68,36 +68,21 @@ class WebSocketApp:
 
     def lag_estimate(self, median):
         hsh, ptime = tuple(list(map(int, l.split())) for l in create_hash(np.array(self.data[:1024*250])))
-        lag_dict = {0:0}
-        for i in range(len(hsh)):
-            if hsh[i] in self.hsh_data:
-                lag = ptime[i] - self.ptime[self.hsh_data.index(hsh[i])]
-                if lag in lag_dict.keys():
-                    lag_dict[lag] += 1
-                else:
-                    lag_dict[lag] = 1
-        self.lag = median
-        if len(lag_dict) >= 3:
-            poss_lag = sorted(lag_dict.values(), reverse=True)[:3]
-            for i in range(2, 1, -1):
-                if poss_lag[i] * 3 < poss_lag[i-1] or poss_lag[i] == 1:
-                    poss_lag = poss_lag[:i]
-            lag_data = [(k, v) for k, v in lag_dict.items() if v in poss_lag]
-            if np.array([l[0] for l in lag_data]).std() < 2:
-                # let error of max 4 diffs
-                self.lag = round(128 * sum([l[0] * l[1] for l in lag_data]) / sum(poss_lag))
+        self.lag = analyze.lag_guess(hsh, ptime, self.hsh_data, self.ptime)
         # TODO: erase below before publication
+        # with open('lag.txt', 'w') as f:
+        #     f.write('final lag = {0} ({1}), std = {2}\n'.format(self.lag, self.lag / 128, np.array([l[0] for l in lag_data]).std()))
+        #     f.write('rank : lag (possibility) ... @{0}\n'.format(self.counter))
+        #     poss_lag = 2
+        #     i = 1
+        #     while poss_lag != 1 and i < 10:
+        #         poss_lag = max(lag_dict.values())
+        #         usual_lag = [k for k, v in lag_dict.items() if v == poss_lag][0]
+        #         f.write('   {0} : {1} ({2})\n'.format(i, usual_lag, poss_lag))
+        #         lag_dict.pop(usual_lag)
+        #         i += 1
         with open('lag.txt', 'w') as f:
-            f.write('final lag = {0} ({1}), std = {2}\n'.format(self.lag, self.lag / 128, np.array([l[0] for l in lag_data]).std()))
-            f.write('rank : lag (possibility) ... @{0}\n'.format(self.counter))
-            poss_lag = 2
-            i = 1
-            while poss_lag != 1 and i < 10:
-                poss_lag = max(lag_dict.values())
-                usual_lag = [k for k, v in lag_dict.items() if v == poss_lag][0]
-                f.write('   {0} : {1} ({2})\n'.format(i, usual_lag, poss_lag))
-                lag_dict.pop(usual_lag)
-                i += 1
+            f.write(self.lag)
 
     def noise_reduction(self):
         # get noise spectrum

@@ -92,6 +92,38 @@ def peaks_to_landmarks(peaks_freq, peaks_time):
             list_ptime.append(ptime)
     return ' '.join(map(str, list_hsh)), ' '.join(map(str, list_ptime))
 
+def lag_guess(hsh, ptime, hsh_data, ptime_data):
+    lag_dict = {0:0}
+    lag = 1000
+    for i in range(len(hsh)):
+        if hsh[i] in hsh_data:
+            lag = ptime[i] - ptime_data[hsh_data.index(hsh[i])]
+            if lag in lag_dict.keys():
+                lag_dict[lag] += 1
+            else:
+                lag_dict[lag] = 1
+    if len(lag_dict) >= 3:
+        poss_lag = sorted(lag_dict.values(), reverse=True)[:3]
+        for i in range(2, 1, -1):
+            if poss_lag[i] * 2 < poss_lag[i-1] or poss_lag[i] == 1:
+                poss_lag = poss_lag[:i]
+        lag_data = [(k, v) for k, v in lag_dict.items() if v in poss_lag]
+        if np.array([l[0] for l in lag_data]).std() < 2:
+            # let error of max 4 diffs
+            lag = round(128 * sum([l[0] * l[1] for l in lag_data]) / sum(poss_lag))
+    with open('lag.txt', 'w') as f:
+        f.write('final lag = {0} ({1}), std = {2}\n'.format(lag, lag / 128, np.array([l[0] for l in lag_data]).std()))
+        f.write('rank : lag (possibility) ... @{0}\n'.format(0))
+        poss_lag = 2
+        i = 1
+        while poss_lag != 1 and i < 10:
+            poss_lag = max(lag_dict.values())
+            usual_lag = [k for k, v in lag_dict.items() if v == poss_lag][0]
+            f.write('   {0} : {1} ({2})\n'.format(i, usual_lag, poss_lag))
+            lag_dict.pop(usual_lag)
+            i += 1
+    return lag
+
 def downsampling(data, y):
     data = sp.signal.lfilter(y, 1, data)
     return data[0::3]
