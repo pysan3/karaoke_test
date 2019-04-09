@@ -69,20 +69,8 @@ class WebSocketApp:
     def lag_estimate(self, median):
         hsh, ptime = tuple(list(map(int, l.split())) for l in create_hash(np.array(self.data[:1024*250])))
         self.lag = analyze.lag_guess(hsh, ptime, self.hsh_data, self.ptime)
-        # TODO: erase below before publication
-        # with open('lag.txt', 'w') as f:
-        #     f.write('final lag = {0} ({1}), std = {2}\n'.format(self.lag, self.lag / 128, np.array([l[0] for l in lag_data]).std()))
-        #     f.write('rank : lag (possibility) ... @{0}\n'.format(self.counter))
-        #     poss_lag = 2
-        #     i = 1
-        #     while poss_lag != 1 and i < 10:
-        #         poss_lag = max(lag_dict.values())
-        #         usual_lag = [k for k, v in lag_dict.items() if v == poss_lag][0]
-        #         f.write('   {0} : {1} ({2})\n'.format(i, usual_lag, poss_lag))
-        #         lag_dict.pop(usual_lag)
-        #         i += 1
-        with open('lag.txt', 'w') as f:
-            f.write(self.lag)
+        if self.lag is False:
+            self.lag = median
 
     def noise_reduction(self):
         # get noise spectrum

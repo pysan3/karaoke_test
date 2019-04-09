@@ -4,4 +4,4 @@ import statistics
 
 import apps.app as backapp
 
-print(statistics.median([0]))
+print(backapp.ws_lag())
