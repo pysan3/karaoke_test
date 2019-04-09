@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from librosa.output import write_wav
 import wave
 import matplotlib.pyplot as plt
 from time import time
@@ -62,7 +63,6 @@ def separate_whole_audio_data():
         mask = analyze.compute_mask(unet, mag[:, i:i+1024])
         data[0].extend(analyze.save_audio(mag[:, i:i+1024]*mask, phase[:, i:i+1024]))
         data[1].extend(analyze.save_audio(mag[:, i:i+1024]*(1-mask), phase[:, i:i+1024]))
-    from librosa.output import write_wav
     for i in range(2):
         write_wav('data{0}.wav'.format(i), np.array(data[i][:length]), 16000, norm=True)
     print(time() - start)
@@ -84,10 +84,21 @@ def lag_estimation():
     print('here')
     print(analyze.lag_guess(hsh, ptime, hsh_data, ptime_data))
 
+def downsampling_test():
+    with wave.open('audio/wav/2.wav', 'r') as wf:
+        print(wf.getframerate())
+    with open('audio/wav/2.wav', 'rb') as f:
+        data = np.frombuffer(f.read()[44:], dtype='int16').astype(np.float32) / 32676
+    data = analyze.resampling(data, 48000, 16000)
+    sp.io.wavfile.write('data.wav', 16000, data)
+    with wave.open('data.wav', 'r') as wf:
+        print(wf.getframerate())
+
 # separate_whole_audio_data()
 # backmusic_upload()
 # noise_reduction()
-lag_estimation()
+# lag_estimation()
+downsampling_test()
 
 # main()
 # pr = cProfile.Profile()
