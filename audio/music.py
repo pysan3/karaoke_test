@@ -39,25 +39,10 @@ def separate_audio(song_id):
     analyze.write_wav('./audio/inst/{0}.wav'.format(song_id), np.array(inst[:length]), 16000, norm=True)
 
 def upload_hash(song_id):
-    import scipy as sp
-    samplerate, vocal = sp.io.wavfile.read('audio/vocal/2.wav')
-    max_sound = max(vocal)
-    l = []
-    counter = 0
-    for start in range(0, len(vocal), int(samplerate / 2)):
-        end = start + int(samplerate / 2)
-        chunk_max = max(vocal[start:end])
-        if chunk_max < max_sound * 0.3 and chunk_max:
-            counter += 1
-            if counter >= 4:
-                l.append((start - 2 * samplerate) / samplerate)
-        else:
-            counter = 0
-    # TODO: get silent part from vocal data -> noise_time
-    noise_time = 1
+    noise_t = analyze.noise_time(song_id)
     with open('./audio/wav/{0}.wav'.format(song_id), 'rb') as f:
         data = np.frombuffer(f.read()[44:], dtype='int16')[:1024*250]
-    return create_hash(data.astype(np.float32) / 32676) + (noise_time,)
+    return create_hash(data.astype(np.float32) / 32676) + (noise_t,)
 
 def create_hash(data):
     f, t = analyze.find_peaks(data)

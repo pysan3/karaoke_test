@@ -31,12 +31,6 @@ functions = [
     'ws_sing'
 ]
 
-# @api.route('/')
-# async def index(req, resp):
-#     f_index = functions.index(sys._getframe().f_code.co_name)
-#     logger.info('@{0} {1} _ index.html'.format(0, f_index))
-#     resp.content = api.template('index.html')
-
 @api.route('/api/login')
 async def login(req, resp):
     f_index = functions.index(sys._getframe().f_code.co_name)

@@ -146,6 +146,7 @@ def noise_time(song_id):
     samplerate, vocal = sp.io.wavfile.read('audio/vocal/{0}.wav'.format(song_id))
     max_sound = max(vocal)
     counter = 0
+    max_counter = [0, 0]
     for start in range(0, len(vocal), int(samplerate / 2)):
         end = start + int(samplerate / 2)
         chunk_max = max(vocal[start:end])
@@ -155,6 +156,9 @@ def noise_time(song_id):
                 return (start - 2 * samplerate) / samplerate
             else:
                 counter = 0
+        if max_counter[1] < counter:
+            max_counter = [start, counter]
+    return (max_counter[0] - max_counter[1] * samplerate / 2) / samplerate
 
 def spectrum_subtraction(sample, noise):
     s_spec = sp.fft(sample*sp.hamming(1024))
@@ -165,7 +169,6 @@ def spectrum_subtraction(sample, noise):
     amp = sp.sqrt(amp)
     spec = amp * sp.exp(s_phase*1j)
     return sp.real(sp.ifft(spec))
-
 
 # TODO: find places with no vocal
 # TODO: check whether user sing voice contains howling sounds
