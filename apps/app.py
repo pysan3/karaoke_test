@@ -103,7 +103,7 @@ def upload_hash(song_id, h, t, n):
 def ws_lag():
     session = Session()
     event_id_ws_sing = session.query(Eventnames).filter_by(event_name='ws_sing').one().id - 1
-    lag_list = session.query(Eventlogs).filter_by(event_id=event_id_ws_sing).all()
+    lag_list = session.query(Eventlogs).filter_by(event_id=event_id_ws_sing).filter_by(user_id=0).all()
     session.close()
     lag = statistics.median([int(l.log_message) for l in lag_list])
     return lag

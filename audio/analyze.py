@@ -127,24 +127,44 @@ def lag_guess(hsh, ptime, hsh_data, ptime_data):
 def resampling(data, orig_sr, target_sr):
     if orig_sr == target_sr:
         return data
-
     axis = -1
     ratio = float(target_sr) / orig_sr
     size = int(np.ceil(data.shape[-1] * ratio))
-
     data = resampy.resample(data, orig_sr, target_sr, filter='kaiser_best', axis=axis)
-
     n = data.shape[axis]
     if n > size:
-        slices = [slice(None)] * data.ndim
-        slices[axis] = slice(0, size)
-        data = data[tuple(slices)]
+        s = [slice(None)] * data.ndim
+        s[axis] = slice(0, size)
+        data = data[tuple(s)]
     elif n < size:
-        lengths = [(0, 0)] * data.ndim
-        lengths[axis] = (0, size - n)
-        data = np.pad(data, lengths, 'constant')
-
+        s = [(0, 0)] * data.ndim
+        s[axis] = (0, size - n)
+        data = np.pad(data, s, 'constant')
     return np.ascontiguousarray(data, dtype=data.dtype)
+
+def noise_time(song_id):
+    samplerate, vocal = sp.io.wavfile.read('audio/vocal/{0}.wav'.format(song_id))
+    max_sound = max(vocal)
+    counter = 0
+    for start in range(0, len(vocal), int(samplerate / 2)):
+        end = start + int(samplerate / 2)
+        chunk_max = max(vocal[start:end])
+        if chunk_max < max_sound * 0.3 and chunk_max:
+            counter += 1
+            if counter == 4:
+                return (start - 2 * samplerate) / samplerate
+            else:
+                counter = 0
+
+def spectrum_subtraction(sample, noise):
+    s_spec = sp.fft(sample*sp.hamming(1024))
+    s_amp = sp.absolute(s_spec)
+    s_phase = sp.angle(s_spec)
+    amp = s_amp ** 2.0 - noise
+    amp = sp.maximum(amp, 0)
+    amp = sp.sqrt(amp)
+    spec = amp * sp.exp(s_phase*1j)
+    return sp.real(sp.ifft(spec))
 
 
 # TODO: find places with no vocal

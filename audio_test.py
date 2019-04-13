@@ -94,11 +94,15 @@ def downsampling_test():
     with wave.open('data.wav', 'r') as wf:
         print(wf.getframerate())
 
+def noise_detection():
+    backmusic.upload_hash(2)
+
 # separate_whole_audio_data()
 # backmusic_upload()
 # noise_reduction()
 # lag_estimation()
-downsampling_test()
+# downsampling_test()
+noise_detection()
 
 # main()
 # pr = cProfile.Profile()

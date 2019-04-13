@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 import wave
 import os
 from time import sleep
@@ -40,8 +39,20 @@ def separate_audio(song_id):
     analyze.write_wav('./audio/inst/{0}.wav'.format(song_id), np.array(inst[:length]), 16000, norm=True)
 
 def upload_hash(song_id):
-    with open('./audio/vocal/{0}.wav'.format(song_id), 'rb') as f:
-        vocal = np.frombuffer(f.read()[44:], dtype='int16')
+    import scipy as sp
+    samplerate, vocal = sp.io.wavfile.read('audio/vocal/2.wav')
+    max_sound = max(vocal)
+    l = []
+    counter = 0
+    for start in range(0, len(vocal), int(samplerate / 2)):
+        end = start + int(samplerate / 2)
+        chunk_max = max(vocal[start:end])
+        if chunk_max < max_sound * 0.3 and chunk_max:
+            counter += 1
+            if counter >= 4:
+                l.append((start - 2 * samplerate) / samplerate)
+        else:
+            counter = 0
     # TODO: get silent part from vocal data -> noise_time
     noise_time = 1
     with open('./audio/wav/{0}.wav'.format(song_id), 'rb') as f:
@@ -56,6 +67,7 @@ def create_hash(data):
 class WebSocketApp:
     def __init__(self, tpl):
         self.data = []
+        self.result = []
         self.counter = [0, 0]
         self.lag = False
         self.hsh_data = [int(i) for i in tpl[0].split()]
@@ -69,34 +81,38 @@ class WebSocketApp:
     def lag_estimate(self, median):
         hsh, ptime = tuple(list(map(int, l.split())) for l in create_hash(np.array(self.data[:1024*250])))
         self.lag = analyze.lag_guess(hsh, ptime, self.hsh_data, self.ptime)
-        if self.lag is False:
-            self.lag = median
+        lag = self.lag or median
+        if lag < 0:
+            self.data = [0]*lag + self.data
+        elif lag > 0:
+            self.data = self.data[lag:]
+        return lag
 
     def noise_reduction(self):
+        if self.counter[0] - 3 >= 48000 * self.noise / 1024:
+            start = (self.counter[0] - 3) * 1024
+            end = start + 1024 * 3
+            noise_data = self.data[start:end]
+            noise_data = analyze.resampling(noise_data, 48000, 16000)
+            n_spec = sp.fft(noise_data * sp.hamming(1024))
+            n_pow = sp.absolute(n_spec) ** 2.0
         # get noise spectrum
         while self.counter[0] != -self.counter[1]:
             if self.counter[0] == self.counter[1]:
                 sleep(1)
                 continue
-            start = 1024 * self.counter[1] + self.lag
-            end = start + 1024
-            if start < 0:
-                l = [0 for i in range(-self.lag)] + self.data[0:end]
-            else:
-                l = self.data[start:end]
-            # make list of len 1024 to nr
+            start = 1024 * self.counter[1]
+            end = start + 1024 * 3
+            data = analyze.resampling(self.data[start:end], 48000, 16000)
+            data = analyze.spectrum_subtraction(data, n_pow)
             # self._sub(list) <- analyze? func for reduce noise ([audio data, 1024] -> [audio data, 1024])
-            self.counter[1] += 1
+            self.result.extend(data)
+            self.counter[1] += 3
 
     def return_counter(self):
         return abs(self.counter[0])
 
-    def return_lag(self):
-        return self.lag
-
     def close(self, info):
-        if self.lag > 0:
-            self.data.extend([0 for i in range(self.lag)])
         self.counter[0] *= -1
         v = (np.array(self.data) * 32767).astype(np.int16)
         with wave.Wave_write('hoge.wav') as wf:
@@ -104,4 +120,9 @@ class WebSocketApp:
             wf.setsampwidth(2)
             wf.setframerate(info['framerate'])
             wf.writeframes(v.tobytes('C'))
-        print(self.lag)
+        v = (np.array(self.result) * 32767).astype(np.int16)
+        with wave.Wave_write('result.wav') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(16000)
+            wf.writeframes(v.tobytes('C'))
