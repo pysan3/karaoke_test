@@ -94,15 +94,46 @@ def downsampling_test():
     with wave.open('data.wav', 'r') as wf:
         print(wf.getframerate())
 
-def noise_detection():
-    backmusic.upload_hash(2)
+def noise_detection(ntime):
+    with open('hoge.wav', 'rb') as f:
+        data = np.frombuffer(f.read()[44:], dtype='int16').astype(np.float32) / 32767
+    start = int(ntime * 48000 / 1024)
+    end = start + 1024 * 3
+    noise_data = data[start:end]
+    noise_data = analyze.resampling(noise_data, 48000, 16000)
+    n_spec = sp.fft(noise_data * sp.hamming(1024))
+    n_pow = sp.absolute(n_spec) ** 2
+    start = 0
+    result = []
+    while True:
+        end = start + 1024 * 3
+        if end > len(data):
+            break
+        ndata = analyze.resampling(data[start:end], 48000, 16000)
+        ndata = analyze.spectrum_subtraction(ndata, n_pow)
+        result.extend(ndata)
+        start = end
+    v = (np.array(result) * 32767).astype(np.int16)
+    with wave.Wave_write('result.wav') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(v.tobytes('C'))
+
+def print_wav(filename):
+    with open(filename + '.wav', 'rb') as f:
+        data = np.frombuffer(f.read()[44:], dtype='int16').astype(np.float32) / 32767
+    x = np.arange(0, len(data) / 48000, 1.0 / 48000)
+    plt.plot(x, data)
+    plt.show()
 
 # separate_whole_audio_data()
 # backmusic_upload()
 # noise_reduction()
 # lag_estimation()
 # downsampling_test()
-noise_detection()
+# noise_detection(3)
+print_wav('result')
 
 # main()
 # pr = cProfile.Profile()

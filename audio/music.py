@@ -74,6 +74,7 @@ class WebSocketApp:
         return lag
 
     def noise_reduction(self):
+        # TODO: subtract real music if self.lag is not False
         if self.counter[0] - 3 >= 48000 * self.noise / 1024:
             start = (self.counter[0] - 3) * 1024
             end = start + 1024 * 3
@@ -81,7 +82,8 @@ class WebSocketApp:
             noise_data = analyze.resampling(noise_data, 48000, 16000)
             n_spec = sp.fft(noise_data * sp.hamming(1024))
             n_pow = sp.absolute(n_spec) ** 2.0
-        # get noise spectrum
+        else:
+            self.noise_reduction()
         while self.counter[0] != -self.counter[1]:
             if self.counter[0] == self.counter[1]:
                 sleep(1)
@@ -90,7 +92,6 @@ class WebSocketApp:
             end = start + 1024 * 3
             data = analyze.resampling(self.data[start:end], 48000, 16000)
             data = analyze.spectrum_subtraction(data, n_pow)
-            # self._sub(list) <- analyze? func for reduce noise ([audio data, 1024] -> [audio data, 1024])
             self.result.extend(data)
             self.counter[1] += 3
 
